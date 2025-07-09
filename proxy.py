@@ -2,16 +2,16 @@
 import os
 import sys
 import argparse
+import threading
+import time
+import subprocess
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 
 # Direct imports from test.py
 from test import load_config, make_circle_commands, send_to_robot
-
-# If connecting to a remote ROS2 domain, you may need to set DDS discovery environment variables:
-# os.environ['ROS_DISCOVERY_SERVER'] = 'remote_server_ip:11811'
-# os.environ['ROS_DOMAIN_ID'] = '0'
 
 class DeviceNode(Node):
     def __init__(self, dry_run: bool):
@@ -20,9 +20,9 @@ class DeviceNode(Node):
 
         self.subscription = self.create_subscription(
             String,
-            'abb_proxy',      # replace with your topic
+            'abb_proxy',
             self.listener_callback,
-            10                # QoS history depth
+            10
         )
         self.subscription  # prevent unused variable warning
 
@@ -39,7 +39,6 @@ class DeviceNode(Node):
         self.get_logger().info(f"Generated CSV payload:\n{csv_payload}")
 
         if self.dry_run:
-            # Skip sending
             self.get_logger().info("Dry run enabled; not sending to robot.")
             return
 
@@ -57,14 +56,29 @@ class DeviceNode(Node):
         except Exception as e:
             self.get_logger().error(f"Failed to send payload: {e}")
 
+def self_trigger_loop():
+    cmd = [
+        sys.executable, '-m', 'ros2', 'topic', 'pub',
+        '/abb_proxy', 'std_msgs/String', '{data: "test"}', '--once'
+    ]
+    while True:
+        subprocess.run(cmd)
+        time.sleep(60)
+
 def main(args=None):
     parser = argparse.ArgumentParser(description="ROS2 proxy for ABB commands")
     parser.add_argument('--dry-run', action='store_true',
                         help="Only generate and log CSV; do not send over TCP")
-    # Allow ROS2 remapping arguments to pass through
+    parser.add_argument('--self-trigger', action='store_true',
+                        help="Every 60s, publish a test command to /abb_proxy")
     known, remaining = parser.parse_known_args()
-    rclpy.init(args=[sys.argv[0]] + remaining)
 
+    # start self-trigger thread if requested
+    if known.self_trigger:
+        t = threading.Thread(target=self_trigger_loop, daemon=True)
+        t.start()
+
+    rclpy.init(args=[sys.argv[0]] + remaining)
     node = DeviceNode(dry_run=known.dry_run)
     try:
         rclpy.spin(node)

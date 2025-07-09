@@ -72,11 +72,15 @@ Receive ROS2 command and send ABB commands
 **`--dry-run`**
 Only print the generated CSV commands; do not open a TCP connection or send anything.
 
+**`--self-trigger`**
+fire ros2 command to test the proxy script itself every 60s, useful for debugging.
+
 #### Examples
 
 ```bash
 python3 proxy.py
 python3 proxy.py --dry-run
+python3 proxy.py --self-trigger --dry-run
 ```
 
 ### Test on ROS2 server
