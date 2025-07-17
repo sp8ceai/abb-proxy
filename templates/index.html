@@ -2,61 +2,100 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>ABB Proxy Web UI</title>
-  <style>
-    body { font-family: sans-serif; margin: 2em; }
-    .error { color: #c00; }
-    .success { color: #090; }
-    form { margin-bottom: 1.5em; }
-    input, textarea { width: 100%; padding: .5em; margin-top: .25em; }
-    button { padding: .5em 1em; }
-    ul { list-style: none; padding: 0; }
-    li { margin: .5em 0; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ABB Proxy Control Panel</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-ENjdO4Dr2bkBIFxQpeoA6Vrr6+2QZ36Ju/nMZL+qU2FKa1oEdbU+Pg5V7Zzh7Sk" crossorigin="anonymous">
 </head>
-<body>
-  <h1>ABB Proxy Control Panel</h1>
+<body class="bg-light">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">ABB Proxy</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link text-white" href="{{ url_for('logout') }}">Logout</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-  <!-- Flash messages -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      <ul>
-        {% for category, msg in messages %}
-          <li class="{{ category }}">{{ msg }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-  {% endwith %}
+  <div class="container py-4">
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mt-3">
+          {% for category, msg in messages %}
+            <div class="alert alert-{{ 'danger' if category=='error' else 'success' }} alert-dismissible fade show" role="alert">
+              {{ msg }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-  <!-- Add new command -->
-  <h2>Add New Command</h2>
-  <form action="{{ url_for('add_command') }}" method="post">
-    <label for="name">Name (letters, numbers, underscore only):</label>
-    <input type="text" id="name" name="name" required pattern="^[A-Za-z0-9_]+$">
-    <label for="content">CSV Content:</label>
-    <textarea id="content" name="content" rows="6" required></textarea>
-    <button type="submit">Save Command</button>
-  </form>
+    <div class="row g-4">
+      <!-- Add New Command -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white">
+            <h5 class="card-title mb-0">Add New Command</h5>
+          </div>
+          <div class="card-body">
+            <form action="{{ url_for('add_command') }}" method="post">
+              <div class="mb-3">
+                <label for="name" class="form-label">Command Name</label>
+                <input type="text" class="form-control" id="name" name="name" placeholder="e.g., abc_123" required pattern="^[A-Za-z0-9_]+$">
+                <div class="form-text">Letters, numbers, and underscores only.</div>
+              </div>
+              <div class="mb-3">
+                <label for="content" class="form-label">CSV Content</label>
+                <textarea class="form-control" id="content" name="content" rows="5" required></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">Save Command</button>
+            </form>
+          </div>
+        </div>
+      </div>
 
-  <!-- List & run existing commands -->
-  <h2>Available Commands</h2>
-  <ul>
-    {% if commands %}
-      {% for cmd in commands %}
-        <li>
-          <strong>{{ cmd }}</strong>
-          <form
-            action="{{ url_for('run_command', command_name=cmd) }}"
-            method="post"
-            style="display:inline;"
-          >
-            <button type="submit">Run</button>
-          </form>
-        </li>
-      {% endfor %}
-    {% else %}
-      <li><em>No commands found.</em></li>
-    {% endif %}
-  </ul>
+      <!-- Available Commands -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-header bg-white">
+            <h5 class="card-title mb-0">Available Commands</h5>
+          </div>
+          <div class="card-body">
+            {% if commands %}
+              <ul class="list-group">
+                {% for cmd in commands %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ cmd }}</span>
+                    <div>
+                      <form action="{{ url_for('run_command', command_name=cmd) }}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-success me-1">Run</button>
+                      </form>
+                      <form action="{{ url_for('delete_command', command_name=cmd) }}" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                      </form>
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-muted">No commands found.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+AMvyTG2xV8AdvH60+HdhfZ+69" crossorigin="anonymous"></script>
 </body>
 </html>
