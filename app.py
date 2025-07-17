@@ -103,10 +103,13 @@ def run_command(command_name):
     if not NAME_PATTERN.match(command_name):
         flash('Invalid command name.', 'error')
         return redirect(url_for('index'))
+    # Build payload string for ROS2 publish
+    payload = "{data: '" + command_name + "'}"
     cmd = [
         'ros2', 'topic', 'pub',
         '/abb_proxy', 'std_msgs/String',
-        f"{'{data: '{command_name}'}'}", '--once'
+        payload,
+        '--once'
     ]
     try:
         subprocess.run(cmd, check=True)
@@ -136,5 +139,5 @@ def delete_command(command_name):
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', '8000'))
+    port = int(os.getenv('PORT', '5000'))
     app.run(host='0.0.0.0', port=port)
