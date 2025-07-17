@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ABB Proxy Web UI</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    .error { color: #c00; }
+    .success { color: #090; }
+    form { margin-bottom: 1.5em; }
+    input, textarea { width: 100%; padding: .5em; margin-top: .25em; }
+    button { padding: .5em 1em; }
+    ul { list-style: none; padding: 0; }
+    li { margin: .5em 0; }
+  </style>
+</head>
+<body>
+  <h1>ABB Proxy Control Panel</h1>
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <ul>
+        {% for category, msg in messages %}
+          <li class="{{ category }}">{{ msg }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Add new command -->
+  <h2>Add New Command</h2>
+  <form action="{{ url_for('add_command') }}" method="post">
+    <label for="name">Name (letters, numbers, underscore only):</label>
+    <input type="text" id="name" name="name" required pattern="^[A-Za-z0-9_]+$">
+    <label for="content">CSV Content:</label>
+    <textarea id="content" name="content" rows="6" required></textarea>
+    <button type="submit">Save Command</button>
+  </form>
+
+  <!-- List & run existing commands -->
+  <h2>Available Commands</h2>
+  <ul>
+    {% if commands %}
+      {% for cmd in commands %}
+        <li>
+          <strong>{{ cmd }}</strong>
+          <form
+            action="{{ url_for('run_command', command_name=cmd) }}"
+            method="post"
+            style="display:inline;"
+          >
+            <button type="submit">Run</button>
+          </form>
+        </li>
+      {% endfor %}
+    {% else %}
+      <li><em>No commands found.</em></li>
+    {% endif %}
+  </ul>
+</body>
+</html>
