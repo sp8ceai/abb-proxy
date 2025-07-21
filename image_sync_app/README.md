@@ -22,8 +22,12 @@ python main.py -s /path/to/service-account.json -l /path/to/local/folder -p pare
 
 ## How to Start Syncing Your Images
 
+Note: make sure you have python3 installed
+
 1. **Install required dependencies:**
      ```bash
+     python3 -m venv .venv
+     source .venv/bin/activate (For window: .venv\Scripts\activate.bat)
      pip install -r requirements.txt
      ```
 
